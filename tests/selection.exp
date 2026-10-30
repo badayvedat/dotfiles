@@ -28,7 +28,7 @@ proc check {name keys probe expected} {
     }
     send -- $probe
     expect {
-        -re {(STATE|EDIT)\|[^\r\n]*} {
+        -re {(STATE|EDIT|CLIP)\|[^\r\n]*} {
             if {$expect_out(0,string) ne $expected} {
                 puts stderr "$name: expected $expected, got $expect_out(0,string)"
                 exit 1
@@ -42,6 +42,7 @@ proc check {name keys probe expected} {
 
 proc selection {name keys expected} { check $name $keys "\x18t" "STATE|$expected" }
 proc edit {name keys expected} { check $name $keys "\030b" "EDIT|$expected" }
+proc clipboard {name keys expected} { check $name $keys "\030p" "CLIP|$expected" }
 
 foreach preloaded {0 1} {
     spawn env TERM=xterm-256color DOTFILES_TEST_PRELOADED=$preloaded zsh -f -i
@@ -96,6 +97,18 @@ foreach preloaded {0 1} {
         edit "$mode magic space replaces selection" [list "\033\[1;4D" "\030g"] "9|0|jj edit  thing|"
         edit "$mode queued arrow cancels before typing" [list "\033\[1;4D\033\[Cx"] "10|0|jj edit sxomething|"
         edit "$mode canceled selection inserts normally" [list "\033\[1;4D" "\033\[C" "x"] "10|0|jj edit sxomething|"
+        clipboard "$mode copy word" [list "\033\[1;4D" "\033w"] "8|1|jj edit something|some|some|"
+        clipboard "$mode cut word" [list "\033\[1;4D" "\033\027"] "8|0|jj edit thing|some|some|"
+        clipboard "$mode copy then cut" [list "\033\[1;4D" "\033w" "\033\027"] "8|0|jj edit thing|some|some|"
+        clipboard "$mode copy then replace" [list "\033\[1;4D" "\033w" "x"] "9|0|jj edit xthing|some|some|"
+        clipboard "$mode copy then extend" [list "\033\[1;2D" "\033w" "\033\[1;4D" "\033w"] "8|1|jj edit something|some|some|"
+        clipboard "$mode cut rightward" [list "\033\[1;4C" "\033\027"] "12|0|jj edit some|thing|thing|"
+        clipboard "$mode copy without selection" [list "\033w"] "12|0|jj edit something|CLIPBOARD_BEFORE|PASTED|"
+        clipboard "$mode cut without selection" [list "\033\027"] "12|0|jj edit something|CLIPBOARD_BEFORE|PASTED|"
+        clipboard "$mode empty selection" [list "\033\[1;2D\033\[1;2C" "\033\027"] "12|1|jj edit something|CLIPBOARD_BEFORE|PASTED|"
+        clipboard "$mode canceled selection" [list "\033\[1;4D" "\033\[C" "\033\027"] "9|0|jj edit something|CLIPBOARD_BEFORE|PASTED|"
+        clipboard "$mode failed cut" [list "\030f" "\033\[1;4D" "\033\027"] "8|1|jj edit something|CLIPBOARD_BEFORE|PASTED|"
+        clipboard "$mode cut then undo" [list "\033\[1;4D" "\033\027" "\030u"] "8|0|jj edit something|some|some|"
         send -- "\030c"
         redraw
     }
@@ -111,6 +124,8 @@ foreach preloaded {0 1} {
     selection "Unicode word" "\033\[1;4D" "8|11|1|été|"
     edit "Unicode replacement" [list "\033\[1;4D" "x"] "9|0|jj edit xthing|"
     edit "Unicode backspace" [list "\033\[1;2D" "\177"] "10|0|jj edit étthing|"
+    clipboard "Unicode copy" [list "\033\[1;4D" "\033w"] "8|1|jj edit ététhing|été|été|"
+    clipboard "Unicode cut" [list "\033\[1;4D" "\033\027"] "8|0|jj edit thing|été|été|"
     send -- "\030c"
     redraw
     send -- {_dotfiles_test_seed() { BUFFER=$'first\njj edit something\nlast'; CURSOR=18; REGION_ACTIVE=0; }; print MULTILINE_READY}
@@ -124,6 +139,7 @@ foreach preloaded {0 1} {
     selection "Multiline line start" "\033\[1;10D" "6|18|1|jj edit some|"
     selection "Multiline line end" "\033\[1;10C" "23|18|1|thing|"
     edit "Multiline replacement" [list "\033\[1;10D" "x"] "7|0|first\\nxthing\\nlast|"
+    clipboard "Multiline copy" [list [string repeat "\033\[1;2D" 13] "\033w"] "5|1|first\\njj edit something\\nlast|\\njj edit some|\\njj edit some|"
     close
     wait
 }
