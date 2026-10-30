@@ -1,49 +1,47 @@
 # dotfiles
 
-Personal Rex configuration and zsh command-line selection support.
+Configure Rex shortcuts and zsh text selection.
 
-## Setup
+## Requirements
 
-Clone this repository to `~/projects/dotfiles`. Move any existing destination files aside before creating these links:
+- Bash
+- zsh
+- Rex
 
-```sh
-mkdir -p ~/.config/rex ~/.zsh
-ln -s ~/projects/dotfiles/rex/init.lua ~/.config/rex/init.lua
-ln -s ~/projects/dotfiles/zsh/selection.zsh ~/.zsh/selection.zsh
-```
+## Install
 
-Add this at the end of `~/.zshrc`, after autosuggestions and syntax highlighting:
+Clone this repository.
+Run one command from the repository directory:
 
-```zsh
-if [[ -n "$REX_SESSION" ]]; then
-  source "$HOME/.zsh/selection.zsh"
-fi
-```
+| Command | Action |
+| --- | --- |
+| `./install.sh all` | Install both configurations. |
+| `./install.sh rex` | Install only Rex shortcuts. |
+| `./install.sh zsh` | Install only zsh selection support. |
 
-Then run `rex config check`, `rex config reload`, and open a new Rex shell. For an existing prompt, run `source ~/.zsh/selection.zsh`.
+Keep the repository in the same location after installation.
+Open a new Rex shell to activate selection.
 
-The Rex-only condition avoids installing selection twice in Brume, which supplies its own integration. To use this in another terminal, enable sourcing there only if it does not already install equivalent selection widgets.
+You can run the installer again.
+It does not overwrite unrelated files.
+If it reports a conflict, move the conflicting file before you retry.
 
 ## Shortcuts
 
-- Ctrl+Cmd+Left/Right: previous/next Rex tab.
-- Shift+Cmd+Left/Right: removed from Rex's default tab shortcuts and forwarded to the terminal.
-- Shift+Left/Right: select characters at the shell prompt.
-- Shift+Option+Left/Right: select words.
-- Shift+Cmd+Left/Right: select to the beginning/end of the logical line.
-- Typing, paste, Backspace, and Delete replace/delete the selected text.
-- Unshifted movement clears the selection and preserves normal zsh motion behavior.
+| Keys | Action |
+| --- | --- |
+| Ctrl+Cmd+Left/Right | Go to the previous or next Rex tab. |
+| Shift+Left/Right | Select characters. |
+| Shift+Option+Left/Right | Select words. |
+| Shift+Cmd+Left/Right | Select text to the start or end of the line. |
 
-Selection supports zsh's Emacs and vi insert modes. It affects the editable command buffer, not terminal output or programs running inside the terminal. The terminal must emit CSI `1;2D/C`, `1;4D/C`, and `1;10D/C` for the corresponding Shift shortcuts; app-local shortcut overrides must not intercept them. If another terminal needs different sequences, add its bindings when adopting it.
+Type or paste to replace selected text.
+Press Backspace or Delete to delete selected text.
+Move without Shift to clear the selection.
+Option and Cmd movement keep their normal behavior.
 
-## Tests
+## Scope
 
-On macOS, with Expect and the Homebrew `zsh-autosuggestions` and `zsh-syntax-highlighting` plugins installed:
-
-```sh
-expect tests/selection.exp
-```
-
-These drive interactive zsh through a pseudo-terminal and check selection, replacement, paste, deletion, undo, cancellation, Unicode, multiline input, repeated sourcing, and both plugin-loading orders.
-
-The selection implementation and tests are adapted from Brume's `Patches/libghostty-spm-zsh-selection.patch`, `Tests/ShellSelection/setup.zsh`, and `scripts/test-shell-selection.exp`. See `LICENSE.brume` for their MIT license.
+Selection works at the zsh prompt in Rex.
+It supports Emacs mode and vi insert mode.
+It does not select terminal output or change editing inside other applications.
