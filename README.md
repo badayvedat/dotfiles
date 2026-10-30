@@ -32,8 +32,9 @@ If it reports a conflict, move the conflicting file before you retry.
 | Keys | Action |
 | --- | --- |
 | Ctrl+Cmd+Left/Right | Go to the previous or next Rex tab. |
-| Cmd+C | Copy selected text to the system clipboard. |
-| Cmd+X | Cut selected text to the system clipboard. |
+| Cmd+C | Copy mouse-selected terminal text. |
+| Esc, then lowercase w | Copy the zsh selection to the system clipboard. |
+| Cmd+X | Cut the zsh selection to the system clipboard. |
 | Shift+Left/Right | Select characters. |
 | Shift+Option+Left/Right | Select words. |
 | Shift+Cmd+Left/Right | Select text to the start or end of the line. |
@@ -48,5 +49,6 @@ Ctrl+C still interrupts commands.
 
 Selection works at the zsh prompt in Rex.
 It supports Emacs mode and vi insert mode.
-Cmd+C and Cmd+X act on shell selections, not terminal output.
-Other terminal applications can respond differently to these shortcuts.
+Cmd+C uses Rex’s normal terminal copy behavior.
+Cmd+X acts on shell selections, not terminal output.
+Other terminal applications can respond differently to Cmd+X.
